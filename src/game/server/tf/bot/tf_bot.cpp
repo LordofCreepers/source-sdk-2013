@@ -917,9 +917,12 @@ bool CTFBot::GetWeightDesiredClassToSpawn( CUtlVector< ETFClass > &vecClassToSpa
 	}
 	else if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT )
 	{
-		if ( GetTeamNumber() == TF_TEAM_RED )
+		if ( TFGameRules()->HasMultipleTrains() )
+			desiredRoster = offenseRoster;
+		else
 		{
-			desiredRoster = defenseRoster;
+			CHandle<CTeamTrainWatcher> train_watcher = TFGameRules()->GetPayloadToPush(GetTeamNumber());
+			desiredRoster = train_watcher.IsValid() ? offenseRoster : defenseRoster;
 		}
 	}
 
@@ -1118,9 +1121,12 @@ ETFClass CTFBot::GetPresetClassToSpawn() const
 	}
 	else if ( TFGameRules()->GetGameType() == TF_GAMETYPE_ESCORT )
 	{
-		if ( GetTeamNumber() == TF_TEAM_RED )
+		if (TFGameRules()->HasMultipleTrains())
+			desiredRoster = offenseRoster;
+		else
 		{
-			desiredRoster = defenseRoster;
+			CHandle<CTeamTrainWatcher> train_watch = TFGameRules()->GetPayloadToPush( GetTeamNumber() );
+			desiredRoster = train_watch.IsValid() ? offenseRoster : defenseRoster;
 		}
 	}
 
@@ -1983,7 +1989,7 @@ CTeamControlPoint *CTFBot::GetMyControlPoint( void ) const
 	CUtlVector< CTeamControlPoint * > defendVector;
 	TFGameRules()->CollectDefendPoints( const_cast< CTFBot * >( this ), &defendVector );
 
-	bool bOnOffense = ( TFGameRules()->IsAttackDefenseMode() && GetTeamNumber() == TF_TEAM_BLUE );
+	bool bOnOffense = ( TFGameRules()->IsAttackDefenseMode() && captureVector.Count() > 0 );
 	
 	// Some attributes and classes prioritize defense (unless we're on the attacking team)
 	if ( ( ( IsPlayerClass( TF_CLASS_ENGINEER ) || IsPlayerClass( TF_CLASS_SNIPER ) ) && !bOnOffense ) || HasAttribute( CTFBot::PRIORITIZE_DEFENSE ) )

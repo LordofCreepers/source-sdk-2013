@@ -12,6 +12,7 @@
 #include "trigger_area_capture.h"
 #include "bot/tf_bot.h"
 #include "bot/behavior/scenario/payload/tf_bot_payload_push.h"
+#include "bot/behavior/scenario/payload/tf_bot_payload_block.h"
 #include "bot/behavior/medic/tf_bot_medic_heal.h"
 #include "bot/behavior/engineer/tf_bot_engineer_build.h"
 
@@ -55,6 +56,12 @@ ActionResult< CTFBot >	CTFBotPayloadPush::Update( CTFBot *me, float interval )
 	if ( !trainWatcher )
 	{
 		return Continue();
+	}
+
+	CTeamTrainWatcher* enemyTrainWatcher = TFGameRules()->GetPayloadToBlock(me->GetTeamNumber());
+	if (enemyTrainWatcher && enemyTrainWatcher->GetTrainProgress() > 0.65f && enemyTrainWatcher->GetCapturerCount() != 0)
+	{
+		return SuspendFor(new CTFBotPayloadBlock, "Enemies are moving their train too far. Have to stop them!");
 	}
 
 	CBaseEntity *cart = trainWatcher->GetTrainEntity();

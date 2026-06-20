@@ -20921,6 +20921,39 @@ const CUtlVector< CHandle< CBaseEntity > > &CTFGameRules::GetAmmoEntityVector( v
 	return m_ammoVector;
 }
 
+static CTeamTrainWatcher* FindPayloadForTeam(int team)
+{
+
+	Msg("Looking for team_train_watcher belonging to team ");
+	switch (team)
+	{
+	case TF_TEAM_BLUE:
+		Msg("BLU");
+		break;
+	case TF_TEAM_RED:
+		Msg("RED");
+		break;
+	default:
+		Msg("Unknown");
+		break;
+	}
+	Msg("\n");
+
+	CTeamTrainWatcher* watcher = NULL;
+	while ((watcher = dynamic_cast<CTeamTrainWatcher*>(gEntList.FindEntityByClassname(watcher, "team_train_watcher"))) != NULL)
+	{
+		if (watcher->IsDisabled() || watcher->GetTeamNumber() != team) 
+			continue;
+
+		Msg("Found team_train_watch entity %x with the same team number\n", reinterpret_cast<size_t>(watcher));
+
+		return watcher;
+	}
+
+	Msg("team_train_watch entity not found\n");
+	return watcher;
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Return the Payload cart the given team needs to push to win, or NULL if none currently exists
@@ -20930,6 +20963,19 @@ CHandle< CTeamTrainWatcher > CTFGameRules::GetPayloadToPush( int pushingTeam ) c
 	if ( TFGameRules()->GetGameType() != TF_GAMETYPE_ESCORT )
 		return NULL;
 
+	if (!m_bluePayloadToPush.IsValid())
+		m_bluePayloadToPush = FindPayloadForTeam(TF_TEAM_BLUE);
+	if (!m_redPayloadToPush.IsValid())
+		m_redPayloadToPush = FindPayloadForTeam(TF_TEAM_RED);
+	
+	if (pushingTeam == TF_TEAM_BLUE)
+		return m_bluePayloadToPush;
+	if (pushingTeam == TF_TEAM_RED)
+		return m_redPayloadToPush;
+
+	return NULL;
+
+	/*
 	if ( pushingTeam == TF_TEAM_RED )
 	{
 		if ( m_redPayloadToPush == NULL )
@@ -20938,11 +20984,12 @@ CHandle< CTeamTrainWatcher > CTFGameRules::GetPayloadToPush( int pushingTeam ) c
 			if ( TFGameRules()->HasMultipleTrains() )
 			{
 				// find the red cart
+				m_redPayloadToPush = FindPayloadForTeam(TF_TEAM_RED);
 			}
 			else
 			{
 				// normal Escort scenario, red always blocks
-				return NULL;
+				TFGameRules()->GetPay
 			}
 		}
 
@@ -20976,6 +21023,7 @@ CHandle< CTeamTrainWatcher > CTFGameRules::GetPayloadToPush( int pushingTeam ) c
 	}
 
 	return NULL;
+	*/
 }
 
 
@@ -20987,6 +21035,27 @@ CHandle< CTeamTrainWatcher > CTFGameRules::GetPayloadToBlock( int blockingTeam )
 	if ( TFGameRules()->GetGameType() != TF_GAMETYPE_ESCORT )
 		return NULL;
 
+	if (TFGameRules()->GetGameType() != TF_GAMETYPE_ESCORT)
+		return NULL;
+
+	if (!m_bluePayloadToPush.IsValid())
+		m_bluePayloadToPush = FindPayloadForTeam(TF_TEAM_BLUE);
+	if (!m_redPayloadToPush.IsValid())
+		m_redPayloadToPush = FindPayloadForTeam(TF_TEAM_BLUE);
+
+	if (!m_bluePayloadToBlock.IsValid() && m_redPayloadToPush.IsValid())
+		m_bluePayloadToBlock = m_redPayloadToPush;
+	if (!m_redPayloadToBlock.IsValid() && m_bluePayloadToPush.IsValid())
+		m_redPayloadToBlock = m_bluePayloadToPush;
+
+	if (blockingTeam == TF_TEAM_BLUE)
+		return m_bluePayloadToBlock;
+	if (blockingTeam == TF_TEAM_RED)
+		return m_redPayloadToBlock;
+
+	return NULL;
+
+	/*
 	if ( blockingTeam == TF_TEAM_RED )
 	{
 		if ( m_redPayloadToBlock == NULL )
@@ -21033,6 +21102,7 @@ CHandle< CTeamTrainWatcher > CTFGameRules::GetPayloadToBlock( int blockingTeam )
 	}
 
 	return NULL;
+	*/
 }
 
 
